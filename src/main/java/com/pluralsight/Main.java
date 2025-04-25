@@ -1,4 +1,5 @@
 package com.pluralsight;
+import javax.annotation.processing.SupportedSourceVersion;
 import java.util.*;
 import java.io.*;
 
@@ -7,12 +8,12 @@ public class Main {
     static ArrayList<Product> inventory = new ArrayList<>();
     static ArrayList<Product> cart = new ArrayList<>();
     static Scanner scanner = new Scanner(System.in);
-    public static final String FILE_NAME = "";
+    public static final String FILE_NAME = "Products.csv";
 
     public static void main(String[] args) {
         loadProducts(FILE_NAME);
 
-        int mainMenuCommand = scanner.nextInt();
+        int mainMenuCommand = 10;
 
         do{
             System.out.println("Welcome to online store! Choose your option by typing an integer: " +
@@ -20,7 +21,7 @@ public class Main {
                     "\n2. Display cart." +
                     "\n0. Exit.");
 
-            mainMenuCommand = scanner.nextInt();
+            mainMenuCommand = getUserInt();
 
             if(mainMenuCommand == 1) displayProducts();
             else if(mainMenuCommand == 2) displayCart();
@@ -31,7 +32,26 @@ public class Main {
     }
 
     public static void loadProducts(String fileName){
+        try{
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(FILE_NAME));
 
+            String input;
+
+            while((input = bufferedReader.readLine()) != null){
+                String[] fields = input.split("\\|");
+                String sku = fields[0];
+                String name = fields[1];
+                float price = Float.parseFloat(fields[2]);
+                String category = fields[3];
+                Product product = new Product(sku, name, price, category);
+                inventory.add(product);
+            }
+
+            bufferedReader.close();
+
+        } catch(Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     public static void displayProducts(){
@@ -41,7 +61,7 @@ public class Main {
                 "\n2. Add product" +
                 "\n0. Back");
 
-        int command = scanner.nextInt();
+        int command = getUserInt();
 
         switch (command){
             case 1:
@@ -52,16 +72,68 @@ public class Main {
                 break;
             case 0:
                 System.out.println("Going back...");
+                break;
             default:
                 System.out.println("Incorrect command, going back...");
         }
     }
 
     private static void searchFilterProducts() {
+        // display all
+        // search by name
+        // filter by category
+        // back
+
+        System.out.println("Search or filter products, choose your option: " +
+                "\n1. Display all" +
+                "\n2. Find product(s) by name" +
+                "\n3. Filter products by department" +
+                "\n0. Go back");
+
+        int command = getUserInt();
+        switch (command){
+            case 1:
+                printArrayList(inventory);
+                break;
+            case 2:
+                System.out.println("Enter product name: ");
+                String inputName = scanner.nextLine();
+                for(Product product : inventory){
+                    if(product.getName().equalsIgnoreCase(inputName)){
+                        System.out.println(product);
+                    }
+                }
+                break;
+            case 3:
+                System.out.println("Enter product category: ");
+                String inputCategory = scanner.nextLine();
+                for(Product product : inventory){
+                    if(product.getDepartment().equalsIgnoreCase(inputCategory)){
+                        System.out.println(product);
+                    }
+                }
+                break;
+            case 0:
+                System.out.println("Going back...");
+                break;
+            default:
+                System.out.println("Invalid input, going back...");
+        }
     }
 
+    // add product to inventory
     private static void addProduct(){
-
+        System.out.println("Enter product sku: ");
+        String input = scanner.nextLine();
+        for(Product product : inventory){
+            if(product.getSku().equalsIgnoreCase(input)){
+                inventory.remove(product);
+                cart.add(product);
+                System.out.println("Added the following item from inventory to cart: " +
+                        "\n" + product);
+                break;
+            }
+        }
     }
 
     public static void displayCart(){
@@ -82,16 +154,29 @@ public class Main {
                 break;
             case 0:
                 System.out.println("Going back...");
+                break;
             default:
                 System.out.println("Invalid input, going back...");
         }
     }
 
     private static void handleCheckOut(){
+        printArrayList(cart);
 
     }
 
     private static void removeProduct() {
+        System.out.println("Enter product sku: ");
+        String input = scanner.nextLine();
+        for(Product product : cart){
+            if(product.getSku().equalsIgnoreCase(input)){
+                cart.remove(product);
+                inventory.add(product);
+                System.out.println("Removed the following item from cart to inventory: " +
+                        "\n" + product);
+                break;
+            }
+        }
     }
 
     static void printArrayList(ArrayList<Product> list){
@@ -105,6 +190,8 @@ public class Main {
             System.out.println("Not an int, input again: ");
             scanner.next();
         }
-        return scanner.nextInt();
+        int result = scanner.nextInt();
+        scanner.nextLine(); // consumes the additional \n
+        return result;
     }
 }
